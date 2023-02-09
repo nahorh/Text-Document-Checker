@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Summarize
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+<div class="row border p-3">
+    <div class="row">
+        <div class="col-auto">
+            <h1 class="text-start my-4 ms-4">Summarizer</h1>
+        </div>
+        <div class="col-auto ms-auto">
+            <button class="btn btn-outline-danger" onclick="document.getElementById('final-result').innerText=''">Clear <span class="material-icons align-middle">delete</span></button>
+
+        </div>
+    </div>
+    <!-- left column -->
+    <div class="col-6  rounded-5 shadow-lg">
+        <!-- left heading -->
+        <!-- form 1 -->
+        <div class="container col-lg-10 mt-4 col-sm-auto text-center">
+            <form enctype="multipart/form-data">
+                <p class="m-0 text-center py-2 mb-2">Summarize PDF Document</p>
+                <div class="input-group">
+                    <input type="file" class="form-control" id="data_file" name="data_file" required>
+                    <label class="input-group-text" for="inputGroupFile02">Upload</label>
+                </div>
+                <button type="button" class="btn btn-primary text-center mt-2 mb-3" onclick="generate_pdf_summary()">Generate
+                    <span id="pdf-spinner" class="spinner-border spinner-border-sm" style="display: none;" role="status" aria-hidden="true"></span>
+                </button>
+            </form>
+        </div>
+        <hr>
+        <!-- form 2 -->
+        <div class="container col-lg-10 mt-4 col-sm-auto text-center">
+            <form>
+                <p class="m-0 text-center py-2 mb-2">Summarize Copied Text</p>
+                <textarea class="form-control border-dark" placeholder="Paste Your Text Here" id="copied-text"
+                style="height: 20vh"required>{{summary}}</textarea>
+                <button type="button" class="btn btn-primary text-center mt-2 mb-3" onclick="generate_copied_text_summary()">Generate
+                    <span id="text-spinner" class="spinner-border spinner-border-sm" style="display: none;" role="status" aria-hidden="true"></span>
+                </button>
+            </form>
+        </div>
+        <hr>
+        <!-- form 3 -->
+        <div class="container col-lg-10 mt-4 col-sm-auto text-center">
+            <form>
+                <p class="m-0 text-center py-2 mb-2">Summarize Web Articles</p>
+                <input type="text" name="web-link" id="web-link" class="form-control border-dark" placeholder="Paste Your Link Here" />
+                <button type="button" class="btn btn-primary text-center mt-2 mb-3" onclick="generate_web_summary()">Generate
+                    <span id="web-spinner" class="spinner-border spinner-border-sm" style="display: none;" role="status" aria-hidden="true"></span>
+                </button>
+            </form>
+        </div>
+
+    </div>
+    <!-- right column -->
+    <div class="col-6 pe-3">
+        <div class="container">
+            <div class="form-floating">
+                <textarea class="form-control border-dark rounded-5" disabled placeholder="Output" id="final-result"
+                style="height: 80vh" value="">{{summary}}</textarea>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+{% endblock %}
+
+{% block script %}
+    <script>
+        async function generate_pdf_summary()
+        {
+            file=document.getElementById('data_file')
+            let spinner=document.getElementById('pdf-spinner')
+            if(file.files[0]==undefined)
+            {
+                alert("Please select a file.")
+            }
+            else
+            {
+                let formdata=new FormData();
+                formdata.append("data_file",file.files[0]);
+                const http=new XMLHttpRequest()
+                http.open("POST","/summarize/pdf",true)
+                http.timeout=60000
+                spinner.style.display=''
+                document.getElementById('final-result').innerText=""
+                http.onload=function()
+                {
+                    let response=JSON.parse(http.responseText)
+                    let code=response['status']
+                    if(code==200)
+                    {
+                        summary=response['result']
+                        document.getElementById('final-result').innerText=summary
+                        spinner.style.display='none'
+                    }
+                    else
+                    {
+                        alert('Invalid file input')
+                        spinner.style.display='none'
+                    }
+                }
+                http.ontimeout=function()
+                {
+                    alert("Session timed out")
+                    spinner.style.display='none'
+                }
+                http.send(formdata)
+            }
+        }
+        
+        async function generate_copied_text_summary()
+        {
+            text=document.getElementById('copied-text').value
+            let spinner=document.getElementById('text-spinner')
+            if(text==undefined || text=="")
+            {
+                alert("Enter the text first.")
+            }
+            else
+            {
+                const http=new XMLHttpRequest()
+                http.open("POST",'/summarize/text',true)
+                http.timeout=60000
+                document.getElementById('final-result').innerText=""
+                spinner.style.display=''
+                http.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+                http.onload=function()
+                {
+                    let response=JSON.parse(http.responseText)
+                    let code=response['status']
+                    if(code==200)
+                    {
+                        summary=response['result']
+                        document.getElementById('final-result').innerText=summary
+                        spinner.style.display='none'
+                    }
+                    else
+                    {
+                        alert('Invalid input')
+                        spinner.style.display='none'
+                    }
+                }
+                http.ontimeout=function()
+                {
+                    alert("Session timed out")
+                    spinner.style.display='none'
+                }
+                http.send(JSON.stringify({"copied-text":text}))
+            }
+        }
+
+        async function generate_web_summary()
+        {
+            let link=document.getElementById('web-link').value
+            if(link.indexOf("http")==0 || link.indexOf("https")==0)
+            {
+                let spinner=document.getElementById('web-spinner')
+                const http=new XMLHttpRequest()
+                http.timeout=60000
+                http.open("POST","/summarize/web",true)
+                http.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+                spinner.style.display=''
+                document.getElementById('final-result').innerText=""
+                http.onload=function()
+                {
+                    let response=JSON.parse(http.responseText)
+                    let code=response['status']
+                    if(code==200)
+                    {
+                        summary=response['result']
+                        document.getElementById('final-result').innerText=summary
+                        spinner.style.display='none'
+                    }
+                    else
+                    {
+                        alert('Forbidden 403')
+                        spinner.style.display='none'
+                    }
+                }
+                http.ontimeout=function()
+                {
+                    alert('Session timed out')
+                    spinner.style.display='none'
+                }
+                http.send(JSON.stringify({"link":link}))
+            }
+            else
+            {
+                alert("Enter a valid link")
+            }
+            
+        }
+    </script>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Login
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+<div class="text-center mt-4">
+</div>
+<div class="container-fluid d-flex justify-content-center">
+    <form action="/login" class="form col-lg-3 text-center rounded-5 shadow bg-light px-4" method="post">
+        <h1 class="text-center">Login</h1>
+        <div class="form-floating my-3">
+            <input type="text" name="email" id="email" class="form-control" placeholder=" ">
+            <label for="email">Email</label>
+        </div>
+        <div class="form-floating my-3">
+            <input type="password" name="email" id="password" class="form-control" placeholder=" ">
+            <label for="password">Password</label>
+        </div>
+        <div class="row">
+            <div class="col-auto me-auto">
+                <a class="nav-link text-start text-primary">Forgot Password?</a>
+            </div>
+            <div class="col-auto ms-auto">
+                <a class="nav-link text-end text-primary" href="/register">SignUp</a>
+            </div>
+        </div>
+        <div class="col-auto ms-auto">
+            <button type="submit" class="btn btn-primary w-auto px-5 my-4 text-end">Submit</button>
+        </div>
+    </form>
+</div>
+</div>
+{% endblock %}
