@@ -6,10 +6,10 @@ Summarize
 
 {% block body %}
 <div class="container-fluid">
-<div class="row border p-3">
+<div class="row p-3">
     <div class="row">
         <div class="col-auto">
-            <h1 class="text-start my-4 ms-4">Summarizer</h1>
+            <h1 class="text-start ms-4">Summarizer</h1>
         </div>
         <div class="col-auto ms-auto">
             <button class="btn btn-outline-danger" onclick="document.getElementById('final-result').innerText=''">Clear <span class="material-icons align-middle">delete</span></button>
@@ -25,11 +25,13 @@ Summarize
                 <p class="m-0 text-center py-2 mb-2">Summarize PDF Document</p>
                 <div class="input-group">
                     <input type="file" class="form-control" id="data_file" name="data_file" required>
-                    <label class="input-group-text" for="inputGroupFile02">Upload</label>
+                    <label class="input-group-text p-0" for="inputGroupFile02"><button type="button" class="btn btn-primary text-center rounded-0 rounded-end" onclick="generate_pdf_summary()">Generate
+                        <span id="pdf-spinner" class="spinner-border spinner-border-sm" style="display: none;" role="status" aria-hidden="true"></span>
+                    </button></label>
                 </div>
-                <button type="button" class="btn btn-primary text-center mt-2 mb-3" onclick="generate_pdf_summary()">Generate
+                <!-- <button type="button" class="btn btn-primary text-center mt-2 mb-3" onclick="generate_pdf_summary()">Generate
                     <span id="pdf-spinner" class="spinner-border spinner-border-sm" style="display: none;" role="status" aria-hidden="true"></span>
-                </button>
+                </button> -->
             </form>
         </div>
         <hr>
@@ -49,7 +51,10 @@ Summarize
         <div class="container col-lg-10 mt-4 col-sm-auto text-center">
             <form>
                 <p class="m-0 text-center py-2 mb-2">Summarize Web Articles</p>
-                <input type="text" name="web-link" id="web-link" class="form-control border-dark" placeholder="Paste Your Link Here" />
+                <div class="form-floating">
+                    <input type="text" name="web-link" id="web-link" class="form-control border-dark" placeholder="Paste Your Link Here" />
+                    <label for="web-link">Paste Your Link Here</label>
+                </div>
                 <button type="button" class="btn btn-primary text-center mt-2 mb-3" onclick="generate_web_summary()">Generate
                     <span id="web-spinner" class="spinner-border spinner-border-sm" style="display: none;" role="status" aria-hidden="true"></span>
                 </button>
@@ -82,35 +87,42 @@ Summarize
             }
             else
             {
-                let formdata=new FormData();
-                formdata.append("data_file",file.files[0]);
-                const http=new XMLHttpRequest()
-                http.open("POST","/summarize/pdf",true)
-                http.timeout=60000
-                spinner.style.display=''
-                document.getElementById('final-result').innerText=""
-                http.onload=function()
+                if(file.files[0].name.toLowerCase().endsWith('.pdf'))
                 {
-                    let response=JSON.parse(http.responseText)
-                    let code=response['status']
-                    if(code==200)
+                    let formdata=new FormData();
+                    formdata.append("data_file",file.files[0]);
+                    const http=new XMLHttpRequest()
+                    http.open("POST","/summarize/pdf",true)
+                    http.timeout=60000
+                    spinner.style.display=''
+                    document.getElementById('final-result').innerText=""
+                    http.onload=function()
                     {
-                        summary=response['result']
-                        document.getElementById('final-result').innerText=summary
+                        let response=JSON.parse(http.responseText)
+                        let code=response['status']
+                        if(code==200)
+                        {
+                            summary=response['result']
+                            document.getElementById('final-result').innerText=summary
+                            spinner.style.display='none'
+                        }
+                        else
+                        {
+                            alert('Invalid file input')
+                            spinner.style.display='none'
+                        }
+                    }
+                    http.ontimeout=function()
+                    {
+                        alert("Session timed out")
                         spinner.style.display='none'
                     }
-                    else
-                    {
-                        alert('Invalid file input')
-                        spinner.style.display='none'
-                    }
+                    http.send(formdata)
                 }
-                http.ontimeout=function()
+                else
                 {
-                    alert("Session timed out")
-                    spinner.style.display='none'
+                    alert('Invalid File Input')
                 }
-                http.send(formdata)
             }
         }
         
