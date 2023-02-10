@@ -1,15 +1,16 @@
 {% extends 'base.html' %}
 
+{% block head %}
+    <link rel="stylesheet" href="{{url_for('static',filename='css/login/style.css')}}">
+{% endblock %}
 {% block title %}
     Login
 {% endblock %}
 
 {% block body %}
-<div class="container-fluid">
-<div class="text-center mt-4">
-</div>
-<div class="container-fluid d-flex justify-content-center">
-    <form action="/login" class="form col-lg-3 text-center rounded-5 shadow bg-light px-4" method="post">
+<!-- <div class="container-fluid"> -->
+<div class="container-fluid d-flex justify-content-center mt-5">
+    <form action="/login" class="form col-lg-3 text-center rounded-5 shadow-lg px-4 mt-5 bg-light" method="post">
         <h1 class="text-center">Login</h1>
         <div class="form-floating my-3">
             <input type="text" name="email" id="email" class="form-control" placeholder=" ">
@@ -32,5 +33,5 @@
         </div>
     </form>
 </div>
-</div>
+<!-- </div> -->
 {% endblock %}
