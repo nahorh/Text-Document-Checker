@@ -1,36 +1,39 @@
-# Program to measure the similarity between
-# two sentences using cosine similarity.
-from nltk.corpus import stopwords
+import nltk
 from nltk.tokenize import word_tokenize
+from nltk.corpus import wordnet
 
-# X = input("Enter first string: ").lower()
-# Y = input("Enter second string: ").lower()
-X ="As a result, face recognition technology is best suited to marking the student's attendance without requiring any contact with any device. LITERATURE SURVEY As mentioned, the system's core is face recognition, which provides the most value to the system. OpenCV is used for image pre-processing and face detection, as well as face recognition on detected faces. And later the teacher has to do the extra work again of marking the attendance in an excel sheet or csv file or any attendance marking system. Fig10: Admin Window Fig11: Student Window After logging in with the necessary credentials, the student can mark his or her attendance using the window depicted in Figure 11. If the forgot password option is selected, display the forgot password screen and, after entering the details, email the user's credentials if the user exists on the system. If the user does not exist in the system, the model is trained, and a welcome email with the login credentials attached is sent to the user."
-Y ="LITERATURE SURVEY As mentioned, the system's core is face recognition, which provides the most value to the system. OpenCV is used for image pre-processing and face detection, as well as face recognition on detected faces. And later the teacher has to do the extra work again of marking the attendance in an excel sheet or csv file or any attendance marking system. Fig10: Admin Window Fig11: Student Window After logging in with the necessary credentials, the student can mark his or her attendance using the window depicted in Figure 11. If the forgot password option is selected, display the forgot password screen and, after entering the details, email the user's credentials if the user exists on the system. If the user does not exist in the system, the model is trained, and a welcome email with the login credentials attached is sent to the user."
+def paraphrase(sentence):
+    # Tokenize the sentence into words
+    words = word_tokenize(sentence)
 
-# tokenization
-doc1_tokens = word_tokenize(X)
-doc2_tokens = word_tokenize(Y)
+    # Create a list to store the paraphrased sentences
+    paraphrases = []
 
-# sw contains the list of stopwords
-sw = stopwords.words('english')
-l1 =[];l2 =[]
+    # For each word in the sentence
+    for word in words:
+        # Get the synonyms of the word from WordNet
+        synonyms = wordnet.synsets(word)
 
-# remove stop words from the string
-X_set = {w for w in doc1_tokens if not w in sw}
-Y_set = {w for w in doc2_tokens if not w in sw}
+        # For each synonym of the word
+        for synonym in synonyms:
+            # Get the lemmas (different forms) of the synonym
+            lemmas = synonym.lemmas()
 
-# form a set containing keywords of both strings
-rvector = X_set.union(Y_set)
-for w in rvector:
-	if w in X_set: l1.append(1) # create a vector
-	else: l1.append(0)
-	if w in Y_set: l2.append(1)
-	else: l2.append(0)
-c = 0
+            # For each lemma of the synonym
+            for lemma in lemmas:
+                # Get the name of the lemma (as a string)
+                name = lemma.name()
 
-# cosine formula
-for i in range(len(rvector)):
-		c+= l1[i]*l2[i]
-cosine = c / float((sum(l1)*sum(l2))**0.5)
-print("similarity: ", cosine)
+                # If the name is different from the original word
+                if name != word:
+                    # Create a new sentence by replacing the word with the synonym
+                    new_sentence = sentence.replace(word, name)
+                    # Add the new sentence to the list of paraphrases
+                    paraphrases.append(new_sentence)
+
+    # Return the list of paraphrased sentences
+    print(paraphrases)
+    return paraphrases
+
+input_string = "NLTK is a leading platform for building Python programs to work with human language data."
+output_string = paraphrase(input_string)

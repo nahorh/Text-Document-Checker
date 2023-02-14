@@ -4,15 +4,78 @@
 {% endblock %}
 
 {% block body %}
-<div class="container-fluid">
-    <div class="row rows-cols-1 rows-cols-lg-5 g-4">
-        <div class="col-auto">
-            
-        </div>
-    </div>
+<div class="container-fluid mt-4 text-center">
+    <label for="fileinput" id="label" class="btn h-50 w-50 border">Upload Folder (0 Files)
+        <span id="text-spinner" class="spinner-border spinner-border-sm" style="display: none;" role="status" aria-hidden="true"></span>
+    </label>    
+        <input type="file" name="" id="fileinput" class="form-control border d-none" accept="application/pdf" onchange="find_plagarism(this,document.getElementById('label'))" multiple>
+</div>
+<div class="container text-center mt-4">
+<table class="table text-center table-hover table-light table-bordered">
+    <thead>
+        <th scope="col">Sr. No</th>
+        <th scope="col">Document 1</th>
+        <th scope="col">Document 2</th>
+        <th scope="col">Score</th>
+    </thead>
+    <tbody id="table-content">
+
+    </tbody>
+</table>
 </div>
 {% endblock %}
 
 {% block script %}
-    <script></script>
+    <script>
+        function find_plagarism(fileinput,label)
+        {
+            let no_of_files=fileinput.files.length
+            let files=fileinput.files
+            label.innerHTML="Upload Folder ("+no_of_files+" Files) "+"<span id=\"text-spinner\" class=\"spinner-border spinner-border-sm\" role=\"status\" aria-hidden=\"true\"></span>"
+            let formdata=new FormData()
+            for(let i=0;i<no_of_files;i++)
+            {
+                formdata.append(fileinput.files[i].name,fileinput.files[i])
+            }
+            http=new XMLHttpRequest()
+            http.open("POST",'/similarity',true)
+            http.timeout=60000
+            http.onload=function()
+            {
+                label.innerHTML="Uploaded Folder ("+no_of_files+" Files) "
+                res=JSON.parse(http.responseText)["result"]
+                // modify table content
+                let table_content=document.getElementById('table-content')
+                // clear the table
+                table_content.innerHTML=""
+                table_content.innerText=""
+
+                for(let i=0;i<res.length;i++)
+                {
+                    if(res[i][2]>=0.8)
+                    {
+                        // add the rows
+                        let tr=document.createElement('tr')
+                        let td0=document.createElement('td')
+                        td0.innerText=i+1
+                        tr.appendChild(td0)
+                        let td1=document.createElement('td')
+                        td1.innerText=res[i][0]
+                        tr.appendChild(td1)
+                        let td2=document.createElement('td')
+                        td2.innerText=res[i][1]
+                        tr.appendChild(td2)
+                        let td3=document.createElement('td')
+                        td3.innerText=Math.round((res[i][2]+Number.EPSILON)*100).toString()+"%"
+                        tr.appendChild(td3)
+                        table_content.appendChild(tr)
+                    }
+                }
+
+                
+            }
+            console.log(formdata)
+            http.send(formdata)
+        }
+    </script>
 {% endblock %}
