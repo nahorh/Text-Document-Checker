@@ -9,15 +9,15 @@
 
 {% block body %}
 <!-- <div class="container-fluid"> -->
-<div class="container-fluid d-flex justify-content-center mt-5">
-    <form action="/login" class="form col-lg-3 text-center rounded-5 shadow-lg px-4 mt-5 bg-light" method="post">
+<div class="container-fluid mt-5">
+    <form action="/login" class=" container-fluid form col-lg-3 text-center rounded-5 shadow-lg border border-2 px-4 bg-light" method="post">
         <h1 class="text-center">Login</h1>
         <div class="form-floating my-3">
             <input type="text" name="email" id="email" class="form-control" placeholder=" ">
             <label for="email">Email</label>
         </div>
         <div class="form-floating my-3">
-            <input type="password" name="email" id="password" class="form-control" placeholder=" ">
+            <input type="password" name="password" id="password" class="form-control" placeholder=" ">
             <label for="password">Password</label>
         </div>
         <div class="row">
@@ -29,7 +29,7 @@
             </div>
         </div>
         <div class="col-auto ms-auto">
-            <button type="submit" class="btn btn-primary w-auto px-5 my-4 text-end">Submit</button>
+            <button type="submit" class="btn btn-primary w-auto p-0 px-5 py-1 my-4 text-end fw-bold fs-4">Submit</button>
         </div>
     </form>
 </div>

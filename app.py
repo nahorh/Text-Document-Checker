@@ -13,17 +13,58 @@ from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+from flask_login import LoginManager,UserMixin,current_user,login_required,login_user,logout_user
+from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import check_password_hash,generate_password_hash
+from dataclasses import dataclass
 import os
 from time import sleep
 
 app=Flask(__name__)
 api=Api(app)
 
+try:
+    app.config['SQLALCHEMY_DATABASE_URI']='mysql://root:admin@localhost/document_checker'
+    app.secret_key="documentcheckerapp"
+    db=SQLAlchemy(app)
+except Exception as e:
+    print(e)
+
+login_manager=LoginManager()
+login_manager.init_app(app)
+login_manager.login_view='/login'
+login_manager.session_protection="basic"
+
+@login_manager.user_loader
+def load_user(get_id):
+    return Users.query.get(int(get_id))
+
 def clear_uploads():
     for file in os.listdir("./static/uploads/"):
                 print(file)
                 if os.path.exists("./static/uploads/{}".format(file)):
                     os.remove("./static/uploads/{}".format(file))
+
+# db table to store user details
+class Users(db.Model,UserMixin):
+    id:int=db.Column(db.Integer,primary_key=True)
+    timestamp:str=db.Column(db.Text,nullable=True)
+    name:str=db.Column(db.Text,nullable=True)
+    email:str=db.Column(db.Text,nullable=True)
+    password:str=db.Column(db.Text,nullable=True)
+
+# api to fetch all user details
+class AllUserDetails(Resource):
+    def get(self):
+        try:
+            res=Users.query.all()
+            for res in res:
+                print(res.name)
+                print(res.email)
+            return str(True)
+        except Exception as e:
+            print(e)
+            return str(False)
 
 class Summarizer(Resource):
     def post(self):
@@ -244,32 +285,75 @@ class SimilarityAPI(Resource):
         
 @app.route("/", methods=['GET'])
 def index():
-    text="return render_template('summarize/home.html')"
-    return render_template('base.html')
+    return render_template('index/home.html')
     
-@app.route('/login',methods=['GET','POST'])
-def login():
-    return render_template('login/home.html')
-
 @app.route('/register',methods=['GET','POST'])
 def register():
-    return render_template('register/home.html')
+    if request.method == 'POST':
+        name=request.form.get('name')
+        email=request.form.get('email')
+        password=request.form.get('password')
+        confirm_password=request.form.get('confirmPassword')
+        user=Users.query.filter(Users.name==name).first()
+        if(not user):
+            if(password==confirm_password):
+                hashed_password=generate_password_hash(password)
+                db.engine.execute(f"insert into users(`name`,`email`,`password`)values('{name}','{email}','{hashed_password}');")
+                print('registered successfully')
+                return redirect('/')
+            else:
+                print("both passwords must be same")
+                return redirect('/register')
+        else:
+            print("User already exists")
+            return redirect('/register')
+    else:
+        return render_template('register/home.html')
+
+@app.route('/login',methods=['GET','POST'])
+def login():
+    if request.method == 'POST':
+        try:
+            username=request.form.get('email')
+            password=request.form.get('password')
+            user=Users.query.filter(Users.email==username).first()
+            print(check_password_hash(user.password,password))
+            if(user and check_password_hash(user.password,password)):
+                login_user(user)
+                print('login successful')
+                return redirect('/')
+            else:
+                print('login failed')
+                return render_template('login/home.html')
+        except Exception as e:
+            print(e)
+            return redirect('/login')
+    else:
+        return render_template('login/home.html')
     
 @app.route('/summarize',methods=['GET'])
+@login_required
 def summarize():
     return render_template('summarize/home.html')
 
 @app.route('/similarity',methods=['GET'])
+@login_required
 def similarity():
     return render_template('similarity/home.html')
     
+@app.route('/logout',methods=['GET'])
+@login_required
+def logout():
+    logout_user()
+    return redirect('/')
+
 api.add_resource(Summarizer,'/summarize')
 api.add_resource(SummarizePDF,'/summarize/pdf')
 api.add_resource(SummarizeText,'/summarize/text')
 api.add_resource(SummarizeWeb,'/summarize/web')
 api.add_resource(SimilarityAPI,'/similarity')
 api.add_resource(CalculateCosineSimilarityScore,'/similarity/cosine/calculate')
-
+api.add_resource(AllUserDetails,'/user/details/all')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=80, debug=True)
